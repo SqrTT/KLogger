@@ -63,6 +63,9 @@ class KLogger
      * @var array
      */
     private $_messageQueue      = array();
+    
+    
+    private $_syslog 		= null;
     /**
      * Path to the log file
      * @var string
