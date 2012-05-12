@@ -63,7 +63,10 @@ class KLogger
      * @var array
      */
     private $_messageQueue      = array();
-    
+    /**
+     * flag for using syslog
+     *
+     */   
     
     private $_syslog 		= null;
     /**
