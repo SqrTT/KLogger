@@ -52,7 +52,7 @@ class KLogger
     const STATUS_LOG_OPEN    = 1;
     const STATUS_OPEN_FAILED = 2;
     const STATUS_LOG_CLOSED  = 3;
-
+    const USE_SYSLOG         = '#';
     /**
      * Current status of the log file
      * @var integer
@@ -125,15 +125,16 @@ class KLogger
      * @param integer $severity     One of the pre-defined severity constants
      * @return KLogger
      */
-    public static function instance($logDirectory = "#", $severity = false)
+    public static function instance($logDirectory = self::USE_SYSLOG, $severity = false)
     {
         if ($severity === false) {
             $severity = self::$_defaultSeverity;
         }
         
-        if ($logDirectory === false) {
+        if ($logDirectory === self::USE_SYSLOG) {
             if (count(self::$instances) > 0) {
-                return current(self::$instances);         
+                return current(self::$instances);
+         
         }
 
         if (in_array($logDirectory, self::$instances)) {
@@ -143,7 +144,7 @@ class KLogger
         self::$instances[$logDirectory] = new self($logDirectory, $severity);
 
         return self::$instances[$logDirectory];
-    }
+    };
 
     /**
      * Class constructor
@@ -152,13 +153,24 @@ class KLogger
      * @param integer $severity     One of the pre-defined severity constants
      * @return void
      */
-    public function __construct($logDirectory, $severity)
+    public function __construct($logDirectory, $severity )
     {
         $logDirectory = rtrim($logDirectory, '\\/');
 
         if ($severity === self::OFF) {
             return;
-        }
+        };
+
+
+        $this->_severityThreshold = $severity;
+        
+        if($logDirectory === self::USE_SYSLOG ){
+           $this->_syslog = true;           
+           openlog("tmplog",LOG_PID,LOG_LOCAL0);
+           $this->_logStatus = self::STATUS_LOG_OPEN;
+           $this->_messageQueue[] = $this->_messages['opensuccess'];
+           return;
+         };
 
         $this->_logFilePath = $logDirectory
             . DIRECTORY_SEPARATOR
@@ -166,19 +178,10 @@ class KLogger
             . date('Y-m-d')
             . '.txt';
 
-        $this->_severityThreshold = $severity;
+
         if (!file_exists($logDirectory)) {
             mkdir($logDirectory, self::$_defaultPermissions, true);
-        }
-        
-        if($logDirectory === "#"){
-           $this->_syslog = true;           
-           openlog(basename(__FILE__),LOG_PID,LOG_LOCAL0);
-           $this->_logStatus = self::STATUS_LOG_OPEN;
-           $this->_messageQueue[] = $this->_messages['opensuccess'];
-           return;
         };
-
         if (file_exists($this->_logFilePath) && !is_writable($this->_logFilePath)) {
             $this->_logStatus = self::STATUS_OPEN_FAILED;
             $this->_messageQueue[] = $this->_messages['writefail'];
