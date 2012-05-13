@@ -166,7 +166,8 @@ class KLogger
         
         if($logDirectory === self::USE_SYSLOG ){
            $this->_syslog = true;           
-           openlog("tmplog",LOG_PID,LOG_LOCAL0);
+           global $argv;
+           openlog($argv[0],LOG_PID,LOG_LOCAL0);
            $this->_logStatus = self::STATUS_LOG_OPEN;
            $this->_messageQueue[] = $this->_messages['opensuccess'];
            return;
