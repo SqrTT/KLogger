@@ -1,8 +1,8 @@
 # KLogger: A Simple Logging Class For PHP
 
-A project written by Kenny Katzgrau and originally hosted at
-[CodeFury.net](http://codefury.net/projects/klogger/). This marks the
-development of a newer version of KLogger.
+A project written by Kenny Katzgrau and modifed by SqrTT
+
+
 
 ## About
 
@@ -16,13 +16,20 @@ saying 'thanks' and asking me to add features.
 
 This github project will host the development of the next version of KLogger.
 The original version of KLogger is tagged as version 0.1, and is available for
-download [here](http://github.com/katzgrau/KLogger/downloads).
+download [here](https://github.com/SqrTT/KLogger).
 
 ## Basic Usage
 
     $log = new KLogger('/var/log/'); # Specify the log directory
     $log->logInfo('Returned a million search results'); //Prints to the log file
     $log->logFatal('Oh dear.'); //Prints to the log file
+    
+    for using writing to syslog
+    $log = new KLogger();
+    $log->logInfo('Hello, all')
+
+    or use singleton
+    $log = KLogger::instance(KLogger:USE_SYSLOG, KLogger::DEBUG);
 
 ## Goals
 
@@ -44,14 +51,7 @@ Klogger has been used in projects at:
     * The New Jersey Institute of Technology
     * Middlesex Hospital in NJ
 
-Additionally, it's been used in numerous projects, both commercial and personal.
-
-## Special Thanks
-
-Special thanks to all contributors, which right now includes two people:
-
-[Tim Kinnane](http://twitter.com/etherealtim)
-[Brian Fenton](http://github.com/fentie)
+Additionally, it's been used in numerous projects, both commercial and personal
 
 ## License
 

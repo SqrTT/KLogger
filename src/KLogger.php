@@ -52,7 +52,7 @@ class KLogger
     const STATUS_LOG_OPEN    = 1;
     const STATUS_OPEN_FAILED = 2;
     const STATUS_LOG_CLOSED  = 3;
-
+    const USE_SYSLOG         = '#';
     /**
      * Current status of the log file
      * @var integer
@@ -63,9 +63,12 @@ class KLogger
      * @var array
      */
     private $_messageQueue      = array();
+    /**
+     * flag for using syslog
+     *
+     */   
     
-    
-    private $_syslog 		= null;
+    private $_syslog 		= false;
     /**
      * Path to the log file
      * @var string
@@ -122,17 +125,15 @@ class KLogger
      * @param integer $severity     One of the pre-defined severity constants
      * @return KLogger
      */
-    public static function instance($logDirectory = false, $severity = false)
+    public static function instance($logDirectory = self::USE_SYSLOG, $severity = false)
     {
         if ($severity === false) {
             $severity = self::$_defaultSeverity;
         }
         
-        if ($logDirectory === false) {
+        if ($logDirectory === self::USE_SYSLOG) {
             if (count(self::$instances) > 0) {
                 return current(self::$instances);
-            } else {
-                $logDirectory = dirname(__FILE__);
             }
         }
 
@@ -152,25 +153,33 @@ class KLogger
      * @param integer $severity     One of the pre-defined severity constants
      * @return void
      */
-    public function __construct($logDirectory, $severity)
-    {
+    public function __construct($logDirectory, $severity ){
+        
         $logDirectory = rtrim($logDirectory, '\\/');
 
         if ($severity === self::OFF) {
             return;
-        }
+        };
 
-        $this->_logFilePath = $logDirectory
-            . DIRECTORY_SEPARATOR
-            . 'log_'
-            . date('Y-m-d')
-            . '.txt';
 
         $this->_severityThreshold = $severity;
+        
+        if($logDirectory === self::USE_SYSLOG ){
+           $this->_syslog = true;           
+           global $argv;
+           openlog($argv[0],LOG_PID,LOG_LOCAL0);
+           $this->_logStatus = self::STATUS_LOG_OPEN;
+           $this->_messageQueue[] = $this->_messages['opensuccess'];
+           return;
+         };
+
+        $this->_logFilePath = $logDirectory . DIRECTORY_SEPARATOR. 'log_' . date('Y-m-d') . '.txt';
+
+
         if (!file_exists($logDirectory)) {
             mkdir($logDirectory, self::$_defaultPermissions, true);
         }
-
+        
         if (file_exists($this->_logFilePath) && !is_writable($this->_logFilePath)) {
             $this->_logStatus = self::STATUS_OPEN_FAILED;
             $this->_messageQueue[] = $this->_messages['writefail'];
@@ -191,6 +200,10 @@ class KLogger
      */
     public function __destruct()
     {
+        if($this->_syslog){
+          closelog();
+        };
+        
         if ($this->_fileHandle) {
             fclose($this->_fileHandle);
         }
@@ -348,7 +361,11 @@ class KLogger
     {
         if ($this->_severityThreshold >= $severity) {
             $status = $this->_getTimeLine($severity);
-            $this->writeFreeFormLine("$status $line \n");
+            if($this->_syslog){
+              $this->writeSyslog($line,$severity);
+            }else{
+        	$this->writeFreeFormLine("$status $line \n");
+            };
         }
     }
 
@@ -367,6 +384,24 @@ class KLogger
             }
         }
     }
+
+    /**
+     * Writes a line to the syslog
+     *
+     * @param string $line Line to write to the log
+     * @return void
+     */
+    public function writeSyslog($line,$severity)
+    {
+        if ($this->_logStatus == self::STATUS_LOG_OPEN
+            && $this->_severityThreshold != self::OFF) {
+            if ($this->_syslog) {
+                syslog($severity,$line);
+            };
+        }
+    }
+
+
 
     private function _getTimeLine($level)
     {
