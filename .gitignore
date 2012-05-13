@@ -2,3 +2,4 @@ src/test.php
 test/
 test/*
 test.php
+example/log*

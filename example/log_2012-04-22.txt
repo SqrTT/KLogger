@@ -1,8 +1,0 @@
-2012-04-22 0:59:24 - INFO --> Info Test 
-2012-04-22 0:59:24 - NOTICE --> Notice Test 
-2012-04-22 0:59:24 - WARN --> Warn Test 
-2012-04-22 0:59:24 - ERROR --> Error Test 
-2012-04-22 0:59:24 - CRIT --> Fatal Test 
-2012-04-22 0:59:24 - ALERT --> Alert Test 
-2012-04-22 0:59:24 - CRIT --> Crit test 
-2012-04-22 0:59:24 - EMERG --> Emerg Test 

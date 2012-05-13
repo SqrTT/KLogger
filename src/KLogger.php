@@ -68,7 +68,7 @@ class KLogger
      *
      */   
     
-    private $_syslog 		= null;
+    private $_syslog 		= false;
     /**
      * Path to the log file
      * @var string
@@ -125,7 +125,7 @@ class KLogger
      * @param integer $severity     One of the pre-defined severity constants
      * @return KLogger
      */
-    public static function instance($logDirectory = false, $severity = false)
+    public static function instance($logDirectory = "#", $severity = false)
     {
         if ($severity === false) {
             $severity = self::$_defaultSeverity;
@@ -133,10 +133,7 @@ class KLogger
         
         if ($logDirectory === false) {
             if (count(self::$instances) > 0) {
-                return current(self::$instances);
-            } else {
-                $logDirectory = dirname(__FILE__);
-            }
+                return current(self::$instances);         
         }
 
         if (in_array($logDirectory, self::$instances)) {
@@ -173,6 +170,14 @@ class KLogger
         if (!file_exists($logDirectory)) {
             mkdir($logDirectory, self::$_defaultPermissions, true);
         }
+        
+        if($logDirectory === "#"){
+           $this->_syslog = true;           
+           openlog(basename(__FILE__),LOG_PID,LOG_LOCAL0);
+           $this->_logStatus = self::STATUS_LOG_OPEN;
+           $this->_messageQueue[] = $this->_messages['opensuccess'];
+           return;
+        };
 
         if (file_exists($this->_logFilePath) && !is_writable($this->_logFilePath)) {
             $this->_logStatus = self::STATUS_OPEN_FAILED;
@@ -194,6 +199,10 @@ class KLogger
      */
     public function __destruct()
     {
+        if($this->_syslog){
+          closelog();
+        };
+        
         if ($this->_fileHandle) {
             fclose($this->_fileHandle);
         }
@@ -351,7 +360,11 @@ class KLogger
     {
         if ($this->_severityThreshold >= $severity) {
             $status = $this->_getTimeLine($severity);
-            $this->writeFreeFormLine("$status $line \n");
+            if($this->_syslog){
+              $this->writeSyslog($line,$severity);
+            }else{
+        	$this->writeFreeFormLine("$status $line \n");
+            };
         }
     }
 
@@ -370,6 +383,24 @@ class KLogger
             }
         }
     }
+
+    /**
+     * Writes a line to the syslog
+     *
+     * @param string $line Line to write to the log
+     * @return void
+     */
+    public function writeSyslog($line,$severity)
+    {
+        if ($this->_logStatus == self::STATUS_LOG_OPEN
+            && $this->_severityThreshold != self::OFF) {
+            if ($this->_syslog) {
+                syslog($severity,$line);
+            };
+        }
+    }
+
+
 
     private function _getTimeLine($level)
     {
