@@ -134,7 +134,7 @@ class KLogger
         if ($logDirectory === self::USE_SYSLOG) {
             if (count(self::$instances) > 0) {
                 return current(self::$instances);
-         
+            }
         }
 
         if (in_array($logDirectory, self::$instances)) {
@@ -144,7 +144,7 @@ class KLogger
         self::$instances[$logDirectory] = new self($logDirectory, $severity);
 
         return self::$instances[$logDirectory];
-    };
+    }
 
     /**
      * Class constructor
@@ -153,8 +153,8 @@ class KLogger
      * @param integer $severity     One of the pre-defined severity constants
      * @return void
      */
-    public function __construct($logDirectory, $severity )
-    {
+    public function __construct($logDirectory, $severity ){
+        
         $logDirectory = rtrim($logDirectory, '\\/');
 
         if ($severity === self::OFF) {
@@ -172,16 +172,13 @@ class KLogger
            return;
          };
 
-        $this->_logFilePath = $logDirectory
-            . DIRECTORY_SEPARATOR
-            . 'log_'
-            . date('Y-m-d')
-            . '.txt';
+        $this->_logFilePath = $logDirectory . DIRECTORY_SEPARATOR. 'log_' . date('Y-m-d') . '.txt';
 
 
         if (!file_exists($logDirectory)) {
             mkdir($logDirectory, self::$_defaultPermissions, true);
-        };
+        }
+        
         if (file_exists($this->_logFilePath) && !is_writable($this->_logFilePath)) {
             $this->_logStatus = self::STATUS_OPEN_FAILED;
             $this->_messageQueue[] = $this->_messages['writefail'];
